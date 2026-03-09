@@ -8,7 +8,7 @@ markdown
 ![Chai](https://img.shields.io/badge/assertions-Chai-red)
 
 A robust and scalable test automation framework built with WebDriverIO (v8+), implementing the **Page Object 
-Model (POM)** design pattern. This framework is designed for ent-to-end testing of web applications, witha a 
+Model (POM)** design pattern. This framework is designed for end-to-end testing of web applications, with a 
 focus on maintainability, readability, and reducing flaky tests.
 
 ## 📋 Table of contents
@@ -31,13 +31,13 @@ focus on maintainability, readability, and reducing flaky tests.
 ## 🔅 Features
 
 - ✅ **Page Object Model (POM)** - Clean separation between test logic and page-specific code
-- ✅ **Automatics waits** - Smart waiting strategies to eliminate flaky tests
-- ✅ **Data-Driving Testing** - External JSON test data files
+- ✅ **Automatic waits** - Smart waiting strategies to eliminate flaky tests
+- ✅ **Data-Driven Testing** - External JSON test data files
 - ✅ **Parallel Execution** - Configured for running tests in parallel 
 - ✅ **Screenshot on Failure** - Automatic screenshots for failed tests
 - ✅ **Cross-Browser Testing** - Easy configuration for multiple browsers
 - ✅ **ES6+ JavaScript** - Modern JavaScript with async/await
-- ✅ **Comprehensive Reporting** - Spec reporter with opticl Allure integration
+- ✅ **Comprehensive Reporting** - Spec reporter with optional Allure integration
 
 ## 🛠️ Tech Stack
 - **Test Framework:** WebDriverIo (v8+)
@@ -63,7 +63,7 @@ focus on maintainability, readability, and reducing flaky tests.
  
  ## 📋 Prerequisites
  
- - **Node.ja** (v16 or higher recommended)
+ - **Node.js** (v16 or higher recommended)
  - **npm** (v7 or higher)
  - **Chrome** browser (for default configuration)
  
@@ -272,7 +272,7 @@ on:
 				path: allure-results/
 
 			- name: Deploy Allure report to GitHub Pages
-			  if: github.fer == 'refs/heads/main'
+			  if: github.ref == 'refs/heads/main'
 			  uses: peaceiris/actions-gh-pages@v3
 			  with:
 			    github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -399,7 +399,7 @@ bash
 
 # Add these args to wdio.conf.js
 'goog:chromeOptions': {
-	args: ['--headless', 0--no-sandbox', '--disable-dev-shm-usage']
+	args: ['--headless', --no-sandbox', '--disable-dev-shm-usage']
 }
 
 Issue: Allure report not generating
