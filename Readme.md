@@ -2,10 +2,10 @@ markdown
 
 # WebDriverIO POM Testing Framework 🚀
 
-[!WebDriverIO](https://img.shields.io/badge/tested%20with-WebDriverIO-%23ea5906)](https://webdriver.io/)
-[![JavaScript](https://img.shields.io/badge/javascript-ES6+-yellow.svg)](https://www.ecma-international.org/)
-[![Mocha](https://img.shields.io/badge/test%20runner-Mocha-brightgreen)](https://mochajs.org/)
-["[Chai](https://img.shields.io/badge/assertions-Chai-red)](https://www.chaijs.com/)
+![WebDriverIO](https://img.shields.io/badge/tested%20with-WebDriverIO-8.0.0-orange)
+![JavaScript](https://img.shields.io/badge/javascript-ES6+-yellow)
+![Mocha](https://img.shields.io/badge/test%20runner-Mocha-brightgreen)
+![Chai](https://img.shields.io/badge/assertions-Chai-red)
 
 A robust and scalable test automation framework built with WebDriverIO (v8+), implementing the **Page Object 
 Model (POM)** design pattern. This framework is designed for ent-to-end testing of web applications, witha a 
@@ -21,6 +21,9 @@ focus on maintainability, readability, and reducing flaky tests.
 -[Running Tests](#running-tests)
 -[Test Data Management](#test-data-management)
 -[Reporting](#reporting)
+-[CI/CD Integration](#cicd-integration)
+-[Docker Support](#docker-support)
+-[Troubleshooting](#troubleshooting)
 -[Best Practices Implementing](#best-practices-implementing)
 -[Contribuiting](#contribuiting)
 -[Author](#author)
@@ -47,20 +50,16 @@ focus on maintainability, readability, and reducing flaky tests.
 ## 📁 Project Structure
 
  webdriverio-pom-framework/
- |--📁 test/
- | |-- 📁 specs/# Test specifications
- | | - login.spec.js # Login test suite
- | |-- 📁 pageobjects/# Page Object classes
- | | - page.js # Base page class
- | | - login.page.js # Login page Object
- | |-- 📁 data/ # Test Data
- | | - test-data.json # JSON test data 
- | |-- 📁 utils/ # Utility functions
- | | - wait-utils.js # Custom wait strategies
- |-- 📁 screenshots/ # Failure screenshots
- |-- wdio.conf.js # WebDriverIO Configuration
- |-- package.json # Dependencies and scripts
- |-- README.md #Project documentation
+├── test/
+│ ├── specs/ # Test files
+│ │ └── login.spec.js
+│ ├── pageobjects/ # Page Objects
+│ │ ├── login.page.js
+│ │ └── home.page.js
+│ └── data/ # Test data
+├── wdio.conf.js # Main config
+├── package.json # Dependencies
+└── README.md # This file
  
  ## 📋 Prerequisites
  
@@ -221,6 +220,199 @@ JavaScript
 		}
 	}
 	
+
+🔁 CI/CD Integration
+
+GitHub Actions Example
+
+Create .githun/worflows/webdriverio.yml :
+
+yaml
+
+name: WebDriverIO tests
+
+on:
+	push:
+		branches: [ main, develop ]
+	pull_request:
+		branches: [ main ]
+	schedule:
+	 - cron: '0 9 * * *' # Run daily at 9 AM
+
+	 jobs:
+	 	test:
+			runs-on: ubuntu-latest
+
+			strategy:
+				matrix:
+					browser: [chrome, firefox, edge]
+
+			steps:
+			- name: Checkout code
+			  uses: actions/checkout@v3
+
+			- name: Setup Node.js
+			  uses: actions/setup-node@v3
+			  with:
+			  	node-version: '18'
+				cache: 'npm'
+
+			- name: Install dependencies
+			  run: npm ci
+
+			- name: Run WebDriverIO tests
+			  run: npm run test -- --browser ${{ matrix.browser }}
+			  continue-on-error: false
+
+			- name: Upload Allure results
+			  if: always()
+			  uses: actions/upload-artifact@v3
+			  with:
+			    name: allure-results-${{ matrix.browser }}
+				path: allure-results/
+
+			- name: Deploy Allure report to GitHub Pages
+			  if: github.fer == 'refs/heads/main'
+			  uses: peaceiris/actions-gh-pages@v3
+			  with:
+			    github_token: ${{ secrets.GITHUB_TOKEN }}
+				publish_dir: ./allure-report
+				destination_dir: ${{ matrix.browser }}
+
+Jenkins Pipeline Example
+
+groovy
+
+pipeline {
+	agent any
+
+	tools {
+		nodejs 'NodeJS-18'
+	}
+
+	parameters {
+		choice (
+			name: 'BROWSER'
+			choices: ['chrome', 'firefox', 'edge'],
+			description: 'Browser to run tests on'
+		)
+	}
+
+	stages {
+		stage('Checkout') {
+			steps {
+				checkout scm
+			}
+		}
+
+		stage(Install Dependencies') {
+			steps {
+				sh 'npm ci'
+			}
+		}
+
+		stage('Run Tests') {
+			steps {
+				sh "npm run test -- --browser ${params.BROWSER}"
+			}
+			post {
+				always {
+					allure([
+						includeProperties: false,
+						jdk: '',
+						properties: [],
+						reportBuildPolicy: 'ALWAYS',
+						results: [[path: 'allure-results']]
+					])
+				}
+			}
+		}
+	}
+
+	post {
+		always {
+			cleanWs()
+		}
+	}
+}
+
+🐳 Docker Support
+
+dockerfile
+
+FROM node:18-slim
+
+# Install Chrome
+RUN apt-get update && apt-get install -y \
+	wget \
+	gnupg \
+	&& wget -q -o - https://dl-ssl.google.com/linux_signing_key.pub | apt-key a dd - \
+	&& echo "deb [arch=amd64] https://dl.googgle.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
+	&& apt-get update && apt-get install -y google-chrome-stable \
+	&& rm -rf /var/lib/apt/lists/*
+
+# Install Firefox
+RUN apt-get install -y firefox-esr
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci
+
+COPY . .
+CMD ["npm", "run", "test"]
+
+
+Docker commands
+
+bash
+
+# Build Docker image
+docker build -t webdriverio-tests .
+
+# Run tests in container
+docker run --rm -v $(pwd)/allure-results:/app/allure-results webdriverio-tests
+
+# Run tests with specific browser
+docker run --rm webdriverio-tests npm run test -- --browser firefox
+
+# Run tests in headless mode
+docker run --rm -e HEADLESS=true webdriverio-tests
+
+🔍 Troubleshooting
+
+Common Issues
+
+Issue: "chromedriver" not found
+
+bash
+
+# Update chromedriver
+npm run chromedriver-update
+
+# Or reinstall
+npm install chromedriver --save-dev
+
+Issue: Tests failing in headless mode
+
+bash
+
+# Add these args to wdio.conf.js
+'goog:chromeOptions': {
+	args: ['--headless', 0--no-sandbox', '--disable-dev-shm-usage']
+}
+
+Issue: Allure report not generating
+
+bash
+
+# Ensure Java is installed
+java -version
+
+# Clear and regenerate
+rm -rf allure-results allure.report
+npm run test
+npm run allure:generate
 	
 🤝Contributing
 
